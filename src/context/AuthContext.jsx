@@ -34,6 +34,79 @@ const INITIAL_NOTIFICATIONS = [
   }
 ];
 
+const MOCK_COMPETITORS = [
+  {
+    id: 'mock-1',
+    name: "Elena Rostova",
+    email: "elena@cyberquest.io",
+    avatar: "👑",
+    xp: 2850,
+    unlockedBadges: ['first_step', 'phishing_scout', 'password_guardian', 'malware_defender', 'social_engineer_shield', 'quiz_master', 'speed_demon', 'streak_7'],
+    dailyLoginStreak: 14,
+    role: "Chief Security Officer"
+  },
+  {
+    id: 'mock-2',
+    name: "Devon Chen",
+    email: "devon@cyberquest.io",
+    avatar: "👾",
+    xp: 2210,
+    unlockedBadges: ['first_step', 'phishing_scout', 'password_guardian', 'malware_defender', 'quiz_master'],
+    dailyLoginStreak: 10,
+    role: "Threat Hunter Elite"
+  },
+  {
+    id: 'mock-3',
+    name: "Marcus Vance",
+    email: "marcus@cyberquest.io",
+    avatar: "🛡️",
+    xp: 1780,
+    unlockedBadges: ['first_step', 'password_guardian', 'malware_defender', 'speed_demon'],
+    dailyLoginStreak: 9,
+    role: "Cyber Sentinel"
+  },
+  {
+    id: 'mock-4',
+    name: "Sarah Connor",
+    email: "sarah@cyberquest.io",
+    avatar: "⚡",
+    xp: 1350,
+    unlockedBadges: ['first_step', 'password_guardian', 'streak_7'],
+    dailyLoginStreak: 7,
+    role: "Vault Keeper"
+  },
+  {
+    id: 'mock-5',
+    name: "Tariq Al-Mansoor",
+    email: "tariq@cyberquest.io",
+    avatar: "🎯",
+    xp: 380,
+    unlockedBadges: ['first_step'],
+    dailyLoginStreak: 3,
+    role: "Cyber Initiate"
+  },
+  {
+    id: 'mock-6',
+    name: "Kaitlyn Wright",
+    email: "kaitlyn@cyberquest.io",
+    avatar: "🔍",
+    xp: 240,
+    unlockedBadges: ['first_step'],
+    dailyLoginStreak: 2,
+    role: "Cyber Initiate"
+  },
+  {
+    id: 'mock-7',
+    name: "Lucas Miller",
+    email: "lucas@cyberquest.io",
+    avatar: "💻",
+    xp: 150,
+    unlockedBadges: [],
+    dailyLoginStreak: 1,
+    role: "Cyber Initiate"
+  }
+];
+
 const getStoredValue = (key, fallback) => {
   if (typeof window === 'undefined') return fallback;
   try {
@@ -45,12 +118,6 @@ const getStoredValue = (key, fallback) => {
 };
 
 const normalizeEmail = (value) => (value || '').trim().toLowerCase();
-const DEMO_ACCOUNT_EMAILS = ['alex.vance@cyberquest.io', 'sam.lee@cyberquest.io'];
-
-const sanitizeStoredAccounts = (accounts) => {
-  if (!Array.isArray(accounts)) return [];
-  return accounts.filter((account) => !DEMO_ACCOUNT_EMAILS.includes(normalizeEmail(account.email)));
-};
 
 const normalizeUserProfile = (profile) => {
   if (!profile) return createInitialUserProfile();
@@ -67,29 +134,23 @@ const buildLeaderboardEntry = (account, currentEmail) => {
     badgesCount: account.unlockedBadges?.length || 0,
     badgeTitle: account.unlockedBadges?.length ? `${account.unlockedBadges.length} badges` : 'New recruit',
     streakDays: account.dailyLoginStreak || 0,
-    isCurrentUser: normalizeEmail(account.email) === normalizeEmail(currentEmail)
+    isCurrentUser: account.email && normalizeEmail(account.email) === normalizeEmail(currentEmail)
   };
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(() => {
-    const storedUser = getStoredValue('cyberquest_user', null);
-    const isSessionActive = Boolean(getStoredValue('cyberquest_auth', false));
-    const sanitizedUser = storedUser && !DEMO_ACCOUNT_EMAILS.includes(normalizeEmail(storedUser.email))
-      ? normalizeUserProfile(storedUser)
-      : createInitialUserProfile({ name: '', email: '' });
-    return isSessionActive && sanitizedUser.email ? sanitizedUser : createInitialUserProfile({ name: '', email: '' });
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    const storedUser = getStoredValue('cyberquest_user', null);
-    const authFlag = Boolean(getStoredValue('cyberquest_auth', false));
-    return authFlag && storedUser && !DEMO_ACCOUNT_EMAILS.includes(normalizeEmail(storedUser.email));
-  });
   const [registeredUsers, setRegisteredUsers] = useState(() => {
     const storedAccounts = getStoredValue('cyberquest_accounts', []);
-    const sanitizedAccounts = sanitizeStoredAccounts(storedAccounts);
-    return sanitizedAccounts.map((account) => normalizeUserProfile(account));
+    return storedAccounts.map((account) => normalizeUserProfile(account));
   });
+
+  const [currentUserId, setCurrentUserId] = useState(() => {
+    return getStoredValue('cyberquest_current_user_id', null);
+  });
+
+  const user = registeredUsers.find(u => u.id === currentUserId) || createInitialUserProfile({ name: '', email: '' });
+  const isAuthenticated = !!currentUserId;
+
   const [toast, setToast] = useState(null);
   const [activeModal, setActiveModal] = useState(null);
 
@@ -102,23 +163,30 @@ export const AuthProvider = ({ children }) => {
     publicLeaderboard: true
   };
 
-  const leaderboardUsers = [...registeredUsers]
+  // Combine real users and mock competitors on the leaderboard
+  const leaderboardUsers = [
+    ...registeredUsers.filter(r => r.email && !MOCK_COMPETITORS.some(m => normalizeEmail(m.email) === normalizeEmail(r.email))),
+    ...MOCK_COMPETITORS
+  ]
     .map((account) => buildLeaderboardEntry(account, user.email))
     .sort((first, second) => (second.xp || 0) - (first.xp || 0))
     .map((entry, index) => ({ ...entry, rank: index + 1 }));
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      window.localStorage.setItem('cyberquest_user', JSON.stringify(user));
-      window.localStorage.setItem('cyberquest_auth', isAuthenticated ? 'true' : 'false');
-    }
-  }, [user, isAuthenticated]);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
       window.localStorage.setItem('cyberquest_accounts', JSON.stringify(registeredUsers));
     }
   }, [registeredUsers]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (currentUserId) {
+        window.localStorage.setItem('cyberquest_current_user_id', currentUserId);
+      } else {
+        window.localStorage.removeItem('cyberquest_current_user_id');
+      }
+    }
+  }, [currentUserId]);
 
   const showToast = (message, type = 'info') => {
     setToast({ message, type });
@@ -129,18 +197,72 @@ export const AuthProvider = ({ children }) => {
 
   const persistUser = (nextUser) => {
     const normalizedUser = normalizeUserProfile(nextUser);
-    const normalizedEmail = normalizeEmail(normalizedUser.email);
-
-    setUser(normalizedUser);
+    
     setRegisteredUsers((prev) => {
-      if (prev.some((entry) => normalizeEmail(entry.email) === normalizedEmail)) {
-        return prev.map((entry) => (normalizeEmail(entry.email) === normalizedEmail ? normalizedUser : entry));
+      if (prev.some((entry) => entry.id === normalizedUser.id)) {
+        return prev.map((entry) => (entry.id === normalizedUser.id ? normalizedUser : entry));
+      } else {
+        return [...prev, normalizedUser];
       }
-
-      return [...prev, normalizedUser];
     });
 
     return normalizedUser;
+  };
+
+  const updateStreak = (currentUser) => {
+    const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD local format
+    const lastActive = currentUser.lastActiveDate;
+
+    let nextStreak = currentUser.dailyLoginStreak || 0;
+    let nextLongest = currentUser.longestStreak || 0;
+
+    if (lastActive === today) {
+      // Already active today, do not increase
+      return currentUser;
+    }
+
+    if (!lastActive) {
+      nextStreak = 1;
+    } else {
+      const lastDate = new Date(lastActive);
+      const todayDate = new Date(today);
+      const diffTime = Math.abs(todayDate - lastDate);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 1) {
+        nextStreak += 1;
+      } else if (diffDays > 1) {
+        nextStreak = 1;
+      }
+    }
+
+    if (nextStreak > nextLongest) {
+      nextLongest = nextStreak;
+    }
+
+    return {
+      ...currentUser,
+      dailyLoginStreak: nextStreak,
+      longestStreak: nextLongest,
+      lastActiveDate: today
+    };
+  };
+
+  const checkStreakLiveness = (profile) => {
+    if (!profile.lastActiveDate) return profile;
+    const today = new Date().toLocaleDateString('en-CA');
+    const lastDate = new Date(profile.lastActiveDate);
+    const todayDate = new Date(today);
+    const diffTime = Math.abs(todayDate - lastDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 1) {
+      return {
+        ...profile,
+        dailyLoginStreak: 0
+      };
+    }
+    return profile;
   };
 
   const addNotification = (title, message, icon = '🔔', type = 'info') => {
@@ -177,10 +299,11 @@ export const AuthProvider = ({ children }) => {
   };
 
   const applyProgressUpdate = (updates) => {
+    const levelInfo = getLevelInfo(updates.xp ?? user.xp ?? 0);
     const nextUser = normalizeUserProfile({
       ...user,
       ...updates,
-      progressPercent: getLevelInfo((updates.xp ?? user.xp ?? 0)).progressPercent
+      progressPercent: levelInfo.progressPercent
     });
     return persistUser(nextUser);
   };
@@ -191,29 +314,58 @@ export const AuthProvider = ({ children }) => {
     const account = registeredUsers.find((entry) => normalizeEmail(entry.email) === normalizedEmail);
 
     if (!account) {
-      showToast('No account was found for that email address.', 'error');
-      return { success: false, message: 'No account was found for that email address.' };
+      showToast('Invalid email or password.', 'error');
+      return { success: false, message: 'Invalid email or password.' };
     }
 
     if (account.password !== normalizedPassword) {
-      showToast('Invalid credentials. Please verify your password and try again.', 'error');
-      return { success: false, message: 'Invalid credentials. Please verify your password and try again.' };
+      showToast('Invalid email or password.', 'error');
+      return { success: false, message: 'Invalid email or password.' };
     }
 
-    const authenticatedUser = normalizeUserProfile({
+    const authenticatedUser = checkStreakLiveness(normalizeUserProfile({
       ...account,
       password: account.password,
-      lastLoginDate: new Date().toISOString().split('T')[0]
-    });
+      lastLoginDate: new Date().toLocaleDateString('en-CA')
+    }));
+
+    const welcomeNotif = {
+      id: Date.now(),
+      title: 'Access Confirmed',
+      message: `Welcome back, ${authenticatedUser.name.split(' ')[0] || 'operator'}!`,
+      time: 'Just now',
+      type: 'success',
+      read: false,
+      icon: '🔐'
+    };
+    authenticatedUser.notifications = [welcomeNotif, ...(authenticatedUser.notifications || [])];
 
     persistUser(authenticatedUser);
-    setIsAuthenticated(true);
+    setCurrentUserId(authenticatedUser.id);
     showToast('Signed in successfully. Welcome back to CyberQuest.', 'success');
-    triggerNotification('Access Confirmed', `Welcome back, ${authenticatedUser.name.split(' ')[0] || 'operator'}!`, '🔐', 'success');
+    setActiveModal({
+      title: 'Access Confirmed',
+      message: `Welcome back, ${authenticatedUser.name.split(' ')[0] || 'operator'}!`,
+      icon: '🔐',
+      type: 'success',
+      rewardXp: 0
+    });
+
+    try {
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#00f0ff', '#9d4edf', '#10b981', '#ff007f']
+      });
+    } catch (error) {
+      // Ignore confetti failures
+    }
+
     return { success: true };
   };
 
-  const signup = (name, email, password, acceptedTerms) => {
+  const signup = (name, email, password, acceptedTerms, avatar) => {
     const safeName = (name || '').trim();
     const normalizedEmail = normalizeEmail(email);
     const normalizedPassword = (password || '').trim();
@@ -247,18 +399,48 @@ export const AuthProvider = ({ children }) => {
       name: safeName,
       email: normalizedEmail,
       password: normalizedPassword,
-      lastLoginDate: new Date().toISOString().split('T')[0]
+      avatar: avatar || '⚡',
+      lastLoginDate: new Date().toLocaleDateString('en-CA')
     });
 
+    const welcomeNotif = {
+      id: Date.now(),
+      title: 'Workspace Ready',
+      message: `Welcome aboard, ${safeName.split(' ')[0]}! Your training workspace is ready.`,
+      time: 'Just now',
+      type: 'success',
+      read: false,
+      icon: '🎖️'
+    };
+    newAccount.notifications = [welcomeNotif, ...(newAccount.notifications || [])];
+
     persistUser(newAccount);
-    setIsAuthenticated(true);
+    setCurrentUserId(newAccount.id);
     showToast('Account created successfully. Your secure workspace is ready.', 'success');
-    triggerNotification('Workspace Ready', `Welcome aboard, ${safeName.split(' ')[0]}! Your training workspace is ready.`, '🎖️', 'success');
+    setActiveModal({
+      title: 'Workspace Ready',
+      message: `Welcome aboard, ${safeName.split(' ')[0]}! Your training workspace is ready.`,
+      icon: '🎖️',
+      type: 'success',
+      rewardXp: 0
+    });
+
+    try {
+      confetti({
+        particleCount: 80,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#00f0ff', '#9d4edf', '#10b981', '#ff007f']
+      });
+    } catch (error) {
+      // Ignore confetti failures
+    }
+
     return { success: true };
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
+    setCurrentUserId(null);
     showToast('You have been signed out.', 'info');
   };
 
@@ -285,7 +467,7 @@ export const AuthProvider = ({ children }) => {
           colors: ['#00f0ff', '#9d4edf', '#10b981', '#ff007f']
         });
       } catch (error) {
-        // Ignore confetti failures in unsupported environments.
+        // Ignore confetti failures
       }
     }
   };
@@ -294,7 +476,7 @@ export const AuthProvider = ({ children }) => {
     setActiveModal(null);
   };
 
-  const completeLesson = (lessonId, xpReward = 100, badgeReward = null) => {
+  const completeLesson = (lessonId, xpReward = 50, badgeReward = null) => {
     if ((user.completedLessons || []).includes(lessonId)) {
       showToast('Lesson already completed!', 'info');
       return;
@@ -320,11 +502,14 @@ export const AuthProvider = ({ children }) => {
       updatedBadges.push('speed_demon');
     }
 
-    applyProgressUpdate({
+    const userWithUpdatedStreak = updateStreak({
+      ...user,
       xp: newXp,
       completedLessons: updatedCompleted,
       unlockedBadges: updatedBadges
     });
+
+    applyProgressUpdate(userWithUpdatedStreak);
 
     const modalMsg = newlyUnlockedBadge
       ? `Lesson complete! Earned +${xpReward} XP & unlocked the "${newlyUnlockedBadge}" Badge!`
@@ -333,7 +518,7 @@ export const AuthProvider = ({ children }) => {
     triggerNotification('Mission Accomplished!', modalMsg, '🛡️', 'success', xpReward);
   };
 
-  const recordQuizResult = (scorePercent, correctCount, totalQuestions, totalXpEarned, topicName = 'General Quiz') => {
+  const recordQuizResult = (scorePercent, correctCount, totalQuestions, totalXpEarned = 100, topicName = 'General Quiz') => {
     const newXp = (user.xp || 0) + totalXpEarned;
     const updatedBadges = [...(user.unlockedBadges || [])];
     let badgeMsg = '';
@@ -347,11 +532,12 @@ export const AuthProvider = ({ children }) => {
       id: Date.now(),
       topic: topicName,
       score: scorePercent,
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('en-CA'),
       xpEarned: totalXpEarned
     };
 
-    applyProgressUpdate({
+    const userWithUpdatedStreak = updateStreak({
+      ...user,
       xp: newXp,
       unlockedBadges: updatedBadges,
       quizStats: {
@@ -364,12 +550,33 @@ export const AuthProvider = ({ children }) => {
       quizHistory: [historyItem, ...(user.quizHistory || [])]
     });
 
+    applyProgressUpdate(userWithUpdatedStreak);
+
     triggerNotification(
       'Assessment Submitted!',
       `You scored ${scorePercent}% (${correctCount}/${totalQuestions}). Earned +${totalXpEarned} XP!${badgeMsg}`,
       scorePercent >= 70 ? '⚡' : '🎯',
       scorePercent >= 70 ? 'success' : 'info',
       totalXpEarned
+    );
+  };
+
+  const completeGame = (gameId, xpReward = 50) => {
+    const newXp = (user.xp || 0) + xpReward;
+
+    const userWithUpdatedStreak = updateStreak({
+      ...user,
+      xp: newXp
+    });
+
+    applyProgressUpdate(userWithUpdatedStreak);
+
+    triggerNotification(
+      'Game Complete!',
+      `You successfully finished the challenge! Earned +${xpReward} XP.`,
+      '🎮',
+      'success',
+      xpReward
     );
   };
 
@@ -383,12 +590,14 @@ export const AuthProvider = ({ children }) => {
       updatedBadges.push('streak_7');
     }
 
-    applyProgressUpdate({
+    const userWithUpdatedStreak = updateStreak({
+      ...user,
       xp: newXp,
       dailyChallengeClaimed: true,
-      unlockedBadges: updatedBadges,
-      dailyLoginStreak: (user.dailyLoginStreak || 0) + 1
+      unlockedBadges: updatedBadges
     });
+
+    applyProgressUpdate(userWithUpdatedStreak);
 
     triggerNotification('Daily Challenge Claimed!', `Claimed +${xpBonus} XP and boosted your streak!`, '🔥', 'success', xpBonus);
   };
@@ -444,6 +653,7 @@ export const AuthProvider = ({ children }) => {
       updateProfile,
       completeLesson,
       recordQuizResult,
+      completeGame,
       claimDailyChallenge,
       resetProgress,
       addNotification,

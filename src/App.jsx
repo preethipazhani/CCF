@@ -17,16 +17,19 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { CertificatePage } from './pages/CertificatePage';
 import { SettingsPage } from './pages/SettingsPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { AISecurityCoach } from './pages/AISecurityCoach';
+import { AdvancedLabsPage } from './pages/AdvancedLabsPage';
 
 function AppContent() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, settings } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedLessonId, setSelectedLessonId] = useState('phishing-1');
 
   const currentView = !isAuthenticated ? 'auth' : activeTab;
+  const currentTheme = settings?.theme || 'cyber-dark';
 
   return (
-    <div className="min-h-screen bg-[#050814] text-gray-100 font-sans relative selection:bg-cyan-500 selection:text-black">
+    <div data-theme={currentTheme} className="min-h-screen bg-[var(--body-bg)] text-[var(--text-primary)] font-sans relative selection:bg-cyan-500 selection:text-black">
       {/* Dynamic Cyber Particle Background */}
       <ParticleBackground />
 
@@ -64,6 +67,8 @@ function AppContent() {
           {currentView === 'certificate' && <CertificatePage />}
           {currentView === 'settings' && <SettingsPage />}
           {currentView === 'profile' && <ProfilePage />}
+          {currentView === 'coach' && <AISecurityCoach />}
+          {currentView === 'labs' && <AdvancedLabsPage />}
         </main>
 
         {/* Floating Toast Notification */}

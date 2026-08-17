@@ -51,8 +51,10 @@ export const Dashboard = ({ setActiveTab, setSelectedLessonId }) => {
                   {levelInfo.rankTitle}
                 </span>
               </div>
-              <p className="text-gray-400 text-sm mt-1 font-mono">
-                System Status: <span className="text-emerald-400 font-semibold">Active Shield Protected</span> • Login Streak: <span className="text-yellow-400 font-bold">{user.dailyLoginStreak} Days 🔥</span>
+              <p className="text-gray-400 text-sm mt-1 font-mono flex flex-wrap items-center gap-x-4">
+                <span>System Status: <span className="text-emerald-400 font-semibold">Active Shield Protected</span></span>
+                <span>🔥 Current Streak: <span className="text-yellow-400 font-bold">{user.dailyLoginStreak || 0} days</span></span>
+                <span>🏆 Longest Streak: <span className="text-cyan-400 font-bold">{user.longestStreak || 0} days</span></span>
               </p>
             </div>
           </div>
@@ -80,7 +82,7 @@ export const Dashboard = ({ setActiveTab, setSelectedLessonId }) => {
           <div className="text-3xl font-black text-white font-mono">{user.xp} <span className="text-sm text-yellow-400">XP</span></div>
           <div className="text-xs text-gray-400 mt-2 font-mono flex items-center space-x-1">
             <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>+{user.completedLessons.length * 100} XP from lessons</span>
+            <span>+{user.completedLessons.length * 50} XP from lessons</span>
           </div>
         </div>
 
@@ -125,7 +127,7 @@ export const Dashboard = ({ setActiveTab, setSelectedLessonId }) => {
       </div>
 
       {/* Level Progress Bar */}
-      <div className="glass-card rounded-2xl p-6 border border-cyan-500/30">
+      <div className="glass-card rounded-2xl p-6 border border-cyan-500/30 space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2">
           <div>
             <div className="text-sm font-bold text-white font-mono flex items-center space-x-2">
@@ -133,7 +135,7 @@ export const Dashboard = ({ setActiveTab, setSelectedLessonId }) => {
               <span className="text-cyan-400">({levelInfo.currentLevelXp} / {levelInfo.xpPerLevel} XP)</span>
             </div>
             <p className="text-xs text-gray-400 mt-0.5 font-mono">
-              Earn {levelInfo.xpPerLevel - levelInfo.currentLevelXp} more XP to reach Level {levelInfo.level + 1}
+              Earn {levelInfo.xpToNextLevel} more XP to reach Level {levelInfo.level + 1}
             </p>
           </div>
           <div className="text-sm font-black text-cyan-400 font-mono">
@@ -147,7 +149,57 @@ export const Dashboard = ({ setActiveTab, setSelectedLessonId }) => {
             style={{ width: `${levelInfo.progressPercent}%` }}
           />
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-cyan-500/10 text-xs font-mono">
+          <div>
+            <div className="text-cyan-300 font-bold mb-1">Current Level Benefit:</div>
+            <div className="text-gray-300">{levelInfo.benefit}</div>
+          </div>
+          {levelInfo.nextLevelName && (
+            <div>
+              <div className="text-purple-300 font-bold mb-1">Next Level ({levelInfo.level + 1}): {levelInfo.nextLevelName}</div>
+              <div className="text-gray-400">Unlock: {levelInfo.nextLevelBenefit}</div>
+            </div>
+          )}
+        </div>
       </div>
+
+      <details className="glass-card rounded-2xl p-4 border border-cyan-500/10 text-xs font-mono group">
+        <summary className="cursor-pointer text-cyan-400 hover:text-cyan-300 font-bold select-none flex items-center justify-between">
+          <span>VIEW LEVEL SYSTEM ROADMAP & BENEFITS</span>
+          <span className="text-[10px] text-gray-500 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div className="mt-4 space-y-3 divide-y divide-cyan-500/10">
+          <div className="pt-2 flex justify-between items-start">
+            <div>
+              <span className="font-bold text-white">Level 1 — Cyber Recruit</span> (0–199 XP)
+              <p className="text-gray-400 mt-1">Benefit: Access to beginner lessons</p>
+            </div>
+            {levelInfo.level === 1 && <span className="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-[10px]">CURRENT</span>}
+          </div>
+          <div className="pt-3 flex justify-between items-start">
+            <div>
+              <span className="font-bold text-white">Level 2 — Security Explorer</span> (200–499 XP)
+              <p className="text-gray-400 mt-1">Benefit: Unlock additional challenges</p>
+            </div>
+            {levelInfo.level === 2 && <span className="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-[10px]">CURRENT</span>}
+          </div>
+          <div className="pt-3 flex justify-between items-start">
+            <div>
+              <span className="font-bold text-white">Level 3 — Cyber Defender</span> (500–999 XP)
+              <p className="text-gray-400 mt-1">Benefit: Unlock advanced learning content</p>
+            </div>
+            {levelInfo.level === 3 && <span className="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-[10px]">CURRENT</span>}
+          </div>
+          <div className="pt-3 flex justify-between items-start">
+            <div>
+              <span className="font-bold text-white">Level 4 — Security Specialist</span> (1000+ XP)
+              <p className="text-gray-400 mt-1">Benefit: Unlock advanced challenges/certification progress</p>
+            </div>
+            {levelInfo.level >= 4 && <span className="bg-cyan-500/20 text-cyan-300 px-2 py-0.5 rounded text-[10px]">CURRENT</span>}
+          </div>
+        </div>
+      </details>
 
       {/* Weekly Progress Chart */}
       <WeeklyProgressChart />

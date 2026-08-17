@@ -47,9 +47,12 @@ export const ProfilePage = () => {
               <p className="text-xs text-gray-300 font-sans italic pt-1">
                 "{user.bio || 'Cyber Cadet passionate about security awareness.'}"
               </p>
-              <div className="pt-2 flex items-center justify-center sm:justify-start space-x-3 text-xs font-mono text-gray-300">
+              <div className="pt-2 flex flex-wrap gap-2 items-center justify-center sm:justify-start text-xs font-mono text-gray-300">
                 <span className="bg-purple-950/60 border border-purple-500/30 px-3 py-1 rounded-lg">
-                  🔥 {user.dailyLoginStreak} Day Streak
+                  🔥 Streak: {user.dailyLoginStreak || 0} days
+                </span>
+                <span className="bg-cyan-950/60 border border-cyan-500/30 px-3 py-1 rounded-lg text-cyan-300">
+                  🏆 Longest: {user.longestStreak || 0} days
                 </span>
                 <span className="bg-emerald-950/60 border border-emerald-500/30 px-3 py-1 rounded-lg text-emerald-400">
                   🛡️ Active Operator
@@ -87,7 +90,7 @@ export const ProfilePage = () => {
             <Zap className="w-6 h-6 fill-yellow-400" />
             <span>{user.xp} XP</span>
           </div>
-          <div className="text-[11px] text-gray-400 mt-2 font-mono">Next level at {levelInfo.level * 250} XP</div>
+          <div className="text-[11px] text-gray-400 mt-2 font-mono">Next level at {user.xp + levelInfo.xpToNextLevel} XP</div>
         </div>
 
         <div className="glass-card p-5 rounded-2xl border border-cyan-500/20">

@@ -67,15 +67,15 @@ export const SettingsPage = () => {
             </button>
 
             <button
-              onClick={() => setSettings(prev => ({ ...prev, theme: 'obsidian' }))}
+              onClick={() => setSettings(prev => ({ ...prev, theme: 'light-mode' }))}
               className={`p-4 rounded-2xl border text-left flex items-center justify-between ${
-                settings.theme === 'obsidian'
+                settings.theme === 'light-mode'
                   ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300 font-bold'
                   : 'bg-[#050917] border-cyan-500/10 text-gray-400'
               }`}
             >
-              <span>Deep Obsidian</span>
-              {settings.theme === 'obsidian' && <Check className="w-4 h-4 text-cyan-400" />}
+              <span>Light Mode</span>
+              {settings.theme === 'light-mode' && <Check className="w-4 h-4 text-cyan-400" />}
             </button>
 
             <button

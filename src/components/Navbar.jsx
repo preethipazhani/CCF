@@ -4,12 +4,14 @@ import { getLevelInfo } from '../data/mockUser';
 import { NotificationCenter } from './NotificationCenter';
 import { 
   Shield, BookOpen, HelpCircle, Trophy, User, LogOut, 
-  Gamepad2, BarChart2, Award, Settings, Menu, X, Zap 
+  Gamepad2, BarChart2, Award, Settings, Menu, X, Zap,
+  Bot, FlaskConical
 } from 'lucide-react';
 
 export const Navbar = ({ activeTab, setActiveTab }) => {
   const { user, isAuthenticated, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   const levelInfo = getLevelInfo(user ? user.xp : 0);
 
@@ -17,6 +19,8 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
     { id: 'dashboard', label: 'Dashboard', icon: Shield },
     { id: 'lessons', label: 'Lessons', icon: BookOpen },
     { id: 'quiz', label: 'Quiz', icon: HelpCircle },
+    { id: 'coach', label: 'AI Coach', icon: Bot },
+    { id: 'labs', label: 'Advanced Labs', icon: FlaskConical },
     { id: 'games', label: 'Cyber Games', icon: Gamepad2 },
     { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
     { id: 'analytics', label: 'Analytics', icon: BarChart2 },
@@ -109,23 +113,78 @@ export const Navbar = ({ activeTab, setActiveTab }) => {
                 <Settings className="w-5 h-5" />
               </button>
 
-              {/* Profile Avatar */}
-              <button
-                onClick={() => setActiveTab('profile')}
-                className="w-10 h-10 rounded-xl bg-purple-950/80 border border-purple-500/40 flex items-center justify-center text-lg hover:border-cyan-400 transition-colors shadow-md"
-                title="View Profile"
-              >
-                {user.avatar || '⚡'}
-              </button>
+              {/* Profile Avatar with Dropdown Popover */}
+              <div className="relative">
+                <button
+                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="w-10 h-10 rounded-xl bg-purple-950/80 border border-purple-500/40 flex items-center justify-center text-lg hover:border-cyan-400 transition-colors shadow-md focus:outline-none"
+                  title="User Account Menu"
+                >
+                  {user.avatar || '⚡'}
+                </button>
 
-              {/* Logout */}
-              <button
-                onClick={logout}
-                className="p-2 rounded-xl text-gray-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all"
-                title="Sign Out"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
+                {userMenuOpen && (
+                  <>
+                    {/* Backdrop cover to click close */}
+                    <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
+                    
+                    {/* Dropdown Card */}
+                    <div className="absolute right-0 mt-2.5 w-64 rounded-2xl bg-[#090f24] border border-cyan-500/30 p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] z-50 space-y-3 font-mono text-xs">
+                      
+                      {/* User Info Header */}
+                      <div className="flex items-center space-x-3 border-b border-cyan-500/20 pb-3">
+                        <div className="w-10 h-10 rounded-lg bg-purple-950/80 border border-purple-500/30 flex items-center justify-center text-lg shrink-0">
+                          {user.avatar || '⚡'}
+                        </div>
+                        <div className="overflow-hidden text-left">
+                          <h4 className="font-bold text-white truncate text-sm">{user.name || 'Operator'}</h4>
+                          <p className="text-[10px] text-gray-400 truncate">{user.email || 'operator@cyberquest.io'}</p>
+                        </div>
+                      </div>
+
+                      {/* Menu Links */}
+                      <div className="space-y-1">
+                        <button
+                          onClick={() => {
+                            setActiveTab('profile');
+                            setUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-cyan-500/10 flex items-center space-x-2 transition-all"
+                        >
+                          <User className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>View Profile</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setActiveTab('settings');
+                            setUserMenuOpen(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-cyan-500/10 flex items-center space-x-2 transition-all"
+                        >
+                          <Settings className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>Settings</span>
+                        </button>
+                      </div>
+
+                      {/* Logout Trigger */}
+                      <div className="border-t border-cyan-500/20 pt-2">
+                        <button
+                          onClick={() => {
+                            logout();
+                            setUserMenuOpen(false);
+                            setActiveTab('auth');
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl text-red-400 hover:bg-red-500/10 flex items-center space-x-2 transition-all"
+                        >
+                          <LogOut className="w-3.5 h-3.5 text-red-400" />
+                          <span>Logout</span>
+                        </button>
+                      </div>
+
+                    </div>
+                  </>
+                )}
+              </div>
 
             </div>
           ) : (

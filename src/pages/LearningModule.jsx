@@ -8,7 +8,7 @@ export const LearningModule = ({ setActiveTab, setSelectedLessonId }) => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const categories = ['All', 'Phishing', 'Password Security', 'Malware', 'Social Engineering'];
+  const categories = ['All', 'Phishing', 'Password Security', 'Malware', 'Social Engineering', 'Network Security', 'Data Privacy', 'Ransomware', 'Safe Browsing'];
 
   const filteredLessons = LESSONS_DATA.filter(lesson => {
     const matchesCategory = selectedCategory === 'All' || lesson.category === selectedCategory;
@@ -36,7 +36,7 @@ export const LearningModule = ({ setActiveTab, setSelectedLessonId }) => {
             CYBER TRAINING <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">MODULES</span>
           </h1>
           <p className="text-gray-300 text-sm leading-relaxed">
-            Master real-world cybersecurity protocols across 4 critical threat domains. Complete formatted lesson modules to earn XP, level up your profile, and unlock security achievement badges.
+            Master real-world cybersecurity protocols across 8 critical threat domains. Complete formatted lesson modules to earn XP, level up your profile, and unlock security achievement badges.
           </p>
         </div>
       </div>
@@ -108,7 +108,7 @@ export const LearningModule = ({ setActiveTab, setSelectedLessonId }) => {
                     ) : (
                       <span className="inline-flex items-center space-x-1 text-xs font-mono font-bold text-yellow-400 bg-yellow-500/10 border border-yellow-500/30 px-3 py-1 rounded-full">
                         <Zap className="w-3.5 h-3.5 fill-yellow-400" />
-                        <span>+{lesson.xpReward} XP</span>
+                        <span>+50 XP</span>
                       </span>
                     )}
                   </div>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Shield, Lock, Mail, User, ArrowRight, Eye, EyeOff, CheckCircle2, Sparkles, Globe2, BadgeCheck, LoaderCircle } from 'lucide-react';
+import { isGoogleConfigured, isMicrosoftConfigured, getGoogleAuthUrl, getMicrosoftAuthUrl } from '../data/oauthConfig';
 
 const passwordStrength = (value) => {
   let score = 0;
@@ -12,14 +13,15 @@ const passwordStrength = (value) => {
 };
 
 export const AuthPage = ({ setActiveTab }) => {
-  const { login, signup } = useAuth();
+  const { login, signup, showToast } = useAuth();
   const [authMode, setAuthMode] = useState('login');
   const [formState, setFormState] = useState({
     email: '',
     password: '',
     name: '',
     confirmPassword: '',
-    acceptedTerms: true
+    acceptedTerms: true,
+    avatar: '⚡'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -77,7 +79,7 @@ export const AuthPage = ({ setActiveTab }) => {
     if (!validateSignup()) return;
     setLoading(true);
     setTimeout(() => {
-      const result = signup(formState.name, formState.email, formState.password, formState.acceptedTerms);
+      const result = signup(formState.name, formState.email, formState.password, formState.acceptedTerms, formState.avatar);
       setLoading(false);
       if (result?.success) setActiveTab('dashboard');
     }, 900);
@@ -225,11 +227,39 @@ export const AuthPage = ({ setActiveTab }) => {
                   <div className="h-px flex-1 bg-slate-700" />
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <button type="button" disabled className="flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-900/70 px-3 py-3 text-sm font-medium text-slate-500 transition cursor-not-allowed">
-                    <Globe2 className="h-4 w-4" /> Google (coming soon)
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isGoogleConfigured()) {
+                        window.location.href = getGoogleAuthUrl();
+                      } else {
+                        showToast("Google OAuth configuration is missing. Configure VITE_GOOGLE_CLIENT_ID and VITE_GOOGLE_REDIRECT_URI.", "error");
+                      }
+                    }}
+                    className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-all ${
+                      isGoogleConfigured()
+                        ? 'border-cyan-500/30 bg-cyan-950/20 text-cyan-300 hover:bg-cyan-500/10'
+                        : 'border-slate-800 bg-slate-900/50 text-slate-500 cursor-not-allowed opacity-80'
+                    }`}
+                  >
+                    <Globe2 className="h-4 w-4" /> Google {isGoogleConfigured() ? '' : '(Unavailable)'}
                   </button>
-                  <button type="button" disabled className="flex items-center justify-center gap-2 rounded-2xl border border-slate-700 bg-slate-900/70 px-3 py-3 text-sm font-medium text-slate-500 transition cursor-not-allowed">
-                    <BadgeCheck className="h-4 w-4" /> Microsoft (coming soon)
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (isMicrosoftConfigured()) {
+                        window.location.href = getMicrosoftAuthUrl();
+                      } else {
+                        showToast("Microsoft OAuth configuration is missing. Configure VITE_MICROSOFT_CLIENT_ID and VITE_MICROSOFT_REDIRECT_URI.", "error");
+                      }
+                    }}
+                    className={`flex items-center justify-center gap-2 rounded-2xl border px-3 py-3 text-sm font-medium transition-all ${
+                      isMicrosoftConfigured()
+                        ? 'border-purple-500/30 bg-purple-950/20 text-purple-300 hover:bg-purple-500/10'
+                        : 'border-slate-800 bg-slate-900/50 text-slate-500 cursor-not-allowed opacity-80'
+                    }`}
+                  >
+                    <BadgeCheck className="h-4 w-4" /> Microsoft {isMicrosoftConfigured() ? '' : '(Unavailable)'}
                   </button>
                 </div>
                 <p className="text-center text-sm text-slate-400">
@@ -308,6 +338,25 @@ export const AuthPage = ({ setActiveTab }) => {
                     </button>
                   </div>
                   {errors.confirmPassword && <p className="mt-2 text-sm text-red-400">{errors.confirmPassword}</p>}
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-slate-300">Profile Avatar (Optional)</label>
+                  <div className="grid grid-cols-6 gap-2 bg-slate-900/60 p-3 rounded-2xl border border-slate-700">
+                    {['⚡', '🛡️', '👾', '👑', '🚀', '🎯', '🔍', '💻', '🦊', '🦉', '🦁', '🐼'].map((emoji) => (
+                      <button
+                        key={emoji}
+                        type="button"
+                        onClick={() => setFormState(prev => ({ ...prev, avatar: emoji }))}
+                        className={`text-xl p-2 rounded-xl border transition-all ${
+                          formState.avatar === emoji
+                            ? 'bg-cyan-500/20 border-cyan-400 text-white shadow-[0_0_15px_rgba(0,240,255,0.25)]'
+                            : 'bg-black/35 border-transparent hover:border-slate-700 text-slate-350'
+                        }`}
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <label className="flex items-start gap-3 rounded-2xl border border-slate-700 bg-slate-900/60 p-3 text-sm text-slate-400">
                   <input
